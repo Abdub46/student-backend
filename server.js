@@ -9,31 +9,64 @@ const app = express();
 /* =======================
    MIDDLEWARE
 ======================= */
-app.use(cors()); // IMPORTANT for fetch()
-app.use(express.json());
+app.use(cors({
+  origin: "*", // allow frontend anywhere (safe for now)
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend files
+// Serve frontend (public folder)
 app.use(express.static(path.join(__dirname, "public")));
+
+/* =======================
+   ENV VALIDATION
+======================= */
+const requiredEnv = [
+  "DB_HOST",
+  "DB_USER",
+  "DB_PASSWORD",
+  "DB_NAME",
+  "DB_PORT"
+];
+
+requiredEnv.forEach(key => {
+  if (!process.env[key]) {
+    console.error(`❌ Missing environment variable: ${key}`);
+    process.exit(1);
+  }
+});
 
 /* =======================
    POSTGRESQL CONNECTION
 ======================= */
+const isSupabase = process.env.DB_HOST.includes("supabase");
+
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: process.env.DB_HOST.includes("supabase")
-    ? { rejectUnauthorized: false }
-    : false
+  port: Number(process.env.DB_PORT),
+  ssl: isSupabase ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000
 });
 
-// Simple DB test (safe)
-pool.query("SELECT 1")
-  .then(() => console.log("✅ Connected to PostgreSQL"))
-  .catch(err => console.error("❌ DB connection error:", err.message));
+// Test DB connection safely
+(async () => {
+  try {
+    await pool.query("SELECT 1");
+    console.log("✅ Connected to PostgreSQL");
+    console.log(`🔐 SSL: ${isSupabase ? "ENABLED (Supabase)" : "DISABLED (Local)"}`);
+  } catch (err) {
+    console.error("❌ DB connection error:", err.message);
+    process.exit(1);
+  }
+})();
 
 /* =======================
    ROUTES
@@ -41,19 +74,19 @@ pool.query("SELECT 1")
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("Server is running ✅");
+  res.json({
+    status: "OK",
+    message: "Server is running ✅"
+  });
 });
 
 // Insert student
 app.post("/student", async (req, res) => {
-  console.log("📥 Received body:", req.body);
-
   const { name, department, phone } = req.body;
 
   if (!name || !department || !phone) {
     return res.status(400).json({
-      message: "All fields are required ❌",
-      received: req.body
+      message: "All fields are required ❌"
     });
   }
 
@@ -61,8 +94,12 @@ app.post("/student", async (req, res) => {
     const result = await pool.query(
       `INSERT INTO students (name, department, phone)
        VALUES ($1, $2, $3)
-       RETURNING *`,
-      [name.trim(), department.trim(), phone.trim()]
+       RETURNING id, name, department, phone, created_at`,
+      [
+        name.trim(),
+        department.trim(),
+        phone.trim()
+      ]
     );
 
     res.status(201).json({
@@ -71,10 +108,9 @@ app.post("/student", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ PostgreSQL error:", err);
+    console.error("❌ Insert error:", err.message);
     res.status(500).json({
-      message: "Failed to save student ❌",
-      error: err.message
+      message: "Failed to save student ❌"
     });
   }
 });
@@ -83,13 +119,23 @@ app.post("/student", async (req, res) => {
 app.get("/students", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM students ORDER BY id DESC"
+      "SELECT id, name, department, phone, created_at FROM students ORDER BY id DESC"
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("❌ Fetch error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Fetch error:", err.message);
+    res.status(500).json({
+      message: "Failed to fetch students ❌"
+    });
   }
+});
+
+/* =======================
+   GLOBAL ERROR HANDLER
+======================= */
+app.use((err, req, res, next) => {
+  console.error("🔥 Unhandled error:", err);
+  res.status(500).json({ message: "Internal server error" });
 });
 
 /* =======================
@@ -97,5 +143,5 @@ app.get("/students", async (req, res) => {
 ======================= */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
