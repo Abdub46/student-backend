@@ -20,11 +20,12 @@ app.use(express.static(path.join(__dirname, "public")));
    POSTGRESQL CONNECTION
 ======================= */
 const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "abdub@123",
-  database: process.env.DB_NAME || "StudentDB", // students table exists here
-  port: process.env.DB_PORT || 5432
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  ssl: { rejectUnauthorized: false }
 });
 
 // Simple DB test (safe)
