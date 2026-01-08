@@ -45,16 +45,15 @@ requiredEnv.forEach(key => {
 const isSupabase = process.env.DB_HOST.includes("supabase");
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST,        // Supabase hostname
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
-  ssl: isSupabase ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000
+  ssl: { rejectUnauthorized: false }, // required by Supabase
+  family: 4                           // force IPv4
 });
+
 
 // Test DB connection safely
 (async () => {
