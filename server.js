@@ -34,16 +34,15 @@ requiredEnv.forEach(key => {
 /* =======================
    POSTGRESQL CONNECTION
 ======================= */
-const isSupabase = process.env.DB_HOST.includes("supabase");
-
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,       // <-- your StudentDB
+  database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
-  ssl: isSupabase ? { rejectUnauthorized: false } : false,
-  family: 4                            // force IPv4 to avoid ENETUNREACH
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Test DB connection with full logging
