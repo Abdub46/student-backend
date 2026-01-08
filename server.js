@@ -14,24 +14,16 @@ app.use(cors({
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
-
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend (public folder)
+// Serve frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =======================
    ENV VALIDATION
 ======================= */
-const requiredEnv = [
-  "DB_HOST",
-  "DB_USER",
-  "DB_PASSWORD",
-  "DB_NAME",
-  "DB_PORT"
-];
-
+const requiredEnv = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_PORT"];
 requiredEnv.forEach(key => {
   if (!process.env[key]) {
     console.error(`❌ Missing environment variable: ${key}`);
@@ -45,24 +37,24 @@ requiredEnv.forEach(key => {
 const isSupabase = process.env.DB_HOST.includes("supabase");
 
 const pool = new Pool({
-  host: process.env.DB_HOST,        // Supabase hostname
+  host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  database: process.env.DB_NAME,       // <-- your StudentDB
   port: Number(process.env.DB_PORT),
-  ssl: { rejectUnauthorized: false }, // required by Supabase
-  family: 4                           // force IPv4
+  ssl: isSupabase ? { rejectUnauthorized: false } : false,
+  family: 4                            // force IPv4 to avoid ENETUNREACH
 });
 
-
-// Test DB connection safely
+// Test DB connection with full logging
 (async () => {
   try {
-    await pool.query("SELECT 1");
+    const result = await pool.query("SELECT current_database(), current_user");
     console.log("✅ Connected to PostgreSQL");
     console.log(`🔐 SSL: ${isSupabase ? "ENABLED (Supabase)" : "DISABLED (Local)"}`);
+    console.log("📚 Database info:", result.rows[0]);
   } catch (err) {
-    console.error("❌ DB connection error:", err.message);
+    console.error("❌ DB connection error FULL:", err);
     process.exit(1);
   }
 })();
@@ -73,10 +65,7 @@ const pool = new Pool({
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({
-    status: "OK",
-    message: "Server is running ✅"
-  });
+  res.json({ status: "OK", message: "Server is running ✅" });
 });
 
 // Insert student
@@ -84,9 +73,7 @@ app.post("/student", async (req, res) => {
   const { name, department, phone } = req.body;
 
   if (!name || !department || !phone) {
-    return res.status(400).json({
-      message: "All fields are required ❌"
-    });
+    return res.status(400).json({ message: "All fields are required ❌" });
   }
 
   try {
@@ -94,22 +81,19 @@ app.post("/student", async (req, res) => {
       `INSERT INTO students (name, department, phone)
        VALUES ($1, $2, $3)
        RETURNING id, name, department, phone, created_at`,
-      [
-        name.trim(),
-        department.trim(),
-        phone.trim()
-      ]
+      [name.trim(), department.trim(), phone.trim()]
     );
 
+    console.log("✅ Inserted student:", result.rows[0]);
     res.status(201).json({
       message: "Student saved successfully ✅",
       student: result.rows[0]
     });
-
   } catch (err) {
-    console.error("❌ Insert error:", err.message);
+    console.error("❌ Insert error FULL:", err);
     res.status(500).json({
-      message: "Failed to save student ❌"
+      message: "Failed to save student ❌",
+      error: err.message
     });
   }
 });
@@ -122,10 +106,21 @@ app.get("/students", async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("❌ Fetch error:", err.message);
+    console.error("❌ Fetch error FULL:", err);
     res.status(500).json({
-      message: "Failed to fetch students ❌"
+      message: "Failed to fetch students ❌",
+      error: err.message
     });
+  }
+});
+
+// Optional debug route to confirm DB info
+app.get("/db-info", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT current_database(), current_user");
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
