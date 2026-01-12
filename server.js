@@ -110,17 +110,17 @@ app.post("/nutrition", async (req, res) => {
 app.get("/nutrition", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, gender, age, weight, height, bmi, category, ideal_weight, energy, created_at FROM nutrition_history ORDER BY created_at DESC"
+      `SELECT id, name, gender, age, weight, height, bmi, category, ideal_weight, energy, created_at
+       FROM students
+       ORDER BY created_at DESC`
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("❌ Fetch error FULL:", err);
-    res.status(500).json({
-      message: "Failed to fetch nutrition records ❌",
-      error: err.message
-    });
+    console.error("Failed to fetch records:", err);
+    res.status(500).json({ message: "Failed to fetch records", error: err.message });
   }
 });
+
 
 // Optional debug route to confirm DB info
 app.get("/db-info", async (req, res) => {
