@@ -16,8 +16,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
-
-// Serve frontend
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =======================
@@ -33,7 +31,6 @@ app.use(express.static(path.join(__dirname, "public")));
 /* =======================
    POSTGRESQL CONNECTION
 ======================= */
-const isSupabase = process.env.DB_HOST.includes("supabase");
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -48,10 +45,9 @@ const pool = new Pool({
   try {
     const result = await pool.query("SELECT current_database(), current_user");
     console.log("✅ Connected to PostgreSQL");
-    console.log(`🔐 SSL: ${isSupabase ? "ENABLED (Supabase)" : "DISABLED (Local)"}`);
     console.log("📚 Database info:", result.rows[0]);
   } catch (err) {
-    console.error("❌ DB connection error FULL:", err);
+    console.error("❌ DB connection error:", err);
     process.exit(1);
   }
 })();
@@ -65,7 +61,7 @@ app.get("/", (req, res) => {
   res.json({ status: "OK", message: "Server is running ✅" });
 });
 
-// Insert nutrition record
+// POST: Insert nutrition record
 app.post("/nutrition", async (req, res) => {
   const {
     name,
@@ -79,7 +75,6 @@ app.post("/nutrition", async (req, res) => {
     energy
   } = req.body;
 
-  // Basic validation
   if (!name || !gender || !age || !weight || !height || !bmi || !category || !energy) {
     return res.status(400).json({ message: "All fields are required ❌" });
   }
@@ -89,7 +84,7 @@ app.post("/nutrition", async (req, res) => {
       `INSERT INTO nutrition_history
        (name, gender, age, weight, height, bmi, category, ideal_weight, energy)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       RETURNING id, name, gender, age, weight, height, bmi, category, ideal_weight, energy, created_at`,
+       RETURNING *`,
       [name.trim(), gender, age, weight, height, bmi, category, ideal_weight, energy]
     );
 
@@ -98,7 +93,7 @@ app.post("/nutrition", async (req, res) => {
       record: result.rows[0]
     });
   } catch (err) {
-    console.error("❌ Insert error FULL:", err);
+    console.error("❌ Insert error:", err);
     res.status(500).json({
       message: "Failed to save nutrition record ❌",
       error: err.message
@@ -106,23 +101,22 @@ app.post("/nutrition", async (req, res) => {
   }
 });
 
-// Fetch all nutrition records
+// GET: Fetch all nutrition records
 app.get("/nutrition", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, name, gender, age, weight, height, bmi, category, ideal_weight, energy, created_at
-       FROM students
+       FROM nutrition_history
        ORDER BY created_at DESC`
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("Failed to fetch records:", err);
+    console.error("❌ Fetch error:", err);
     res.status(500).json({ message: "Failed to fetch records", error: err.message });
   }
 });
 
-
-// Optional debug route to confirm DB info
+// Optional debug route
 app.get("/db-info", async (req, res) => {
   try {
     const result = await pool.query("SELECT current_database(), current_user");
@@ -147,3 +141,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
