@@ -1,0 +1,205 @@
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== BODY & ROOT ===== */
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f7fb;
+  overflow-x: hidden;
+}
+
+/* ===== NAVBAR (STICKY) ===== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: #0ea5a3;
+  color: white;
+}
+
+.nav-brand {
+  color: white;
+  text-decoration: none;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 600;
+}
+
+/* ===== APP WRAPPER ===== */
+.app {
+  min-height: calc(100vh - 60px);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ===== MAIN CARD ===== */
+.container {
+  width: 100%;
+  max-width: 520px;        /* better desktop width */
+  min-width: 280px;        /* safe for very small phones */
+  background: #ffffff;
+  border-radius: 16px;
+  padding: clamp(16px, 4vw, 24px);
+  display: flex;
+  flex-direction: column;
+  /*gap: 14px;*/
+  row-gap: 50px;
+}
+
+/* ===== HEADINGS ===== */
+#greet {
+  text-align: center;
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+  margin-bottom: 50px;
+}
+
+/* ===== FORM ELEMENTS ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+/* ===== SIDE-BY-SIDE ROWS ===== */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ===== BUTTON ===== */
+#btn {
+  margin-top: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: #0ea5a3;
+  color: white;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* ===== RESULTS ===== */
+#result, #ideal, #energy {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ===== LINK ===== */
+a {
+  text-decoration: none;
+  font-weight: 500;
+  color: #0ea5a3;
+  text-align: center;
+}
+
+/* ===== LARGE SCREENS (DESKTOP) ===== */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+
+
+
+
+
+
+/* ===============================
+   SMOOTH APP ANIMATIONS
+================================ */
+
+/* App entrance */
+.app {
+  animation: appFade 0.6s ease-out both;
+}
+
+@keyframes appFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input focus animation */
+input:focus, select:focus {
+  outline: none;
+  border-color: #0ea5a3;
+  box-shadow: 0 0 0 3px rgba(14, 165, 163, 0.2);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Button interaction */
+#btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#btn:hover {
+  box-shadow: 0 8px 20px rgba(14, 165, 163, 0.25);
+}
+
+#btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(14, 165, 163, 0.2);
+}
+
+/* Result reveal animation */
+#result, #ideal, #energy {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.show-result {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* Soft card hover (desktop only) */
+@media (hover: hover) {
+  .container {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .container:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  }
+}

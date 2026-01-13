@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>BlueTicks | Common Conditions</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0ea5a3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<header class="navbar">
+  <span class="nav-brand">BlueTicks</span>
+  <button class="menu-btn" id="menuBtn" aria-label="Open Menu">☰</button>
+</header>
+
+<!-- ===== FULLSCREEN MENU ===== -->
+<div class="menu-overlay" id="menuOverlay">
+  <button class="close-btn" id="closeBtn" aria-label="Close Menu">✕</button>
+  <nav class="menu-links">
+    <a href="home.html">Home</a>
+    <a href="index.html">Check Nutrition</a>
+    <a href="conditions.html">Common Conditions</a>
+    <a href="about.html">About Us</a>
+    <a href="notes.html">My Notes</a>
+
+
+
+    <!--<button class="logout-btn" onclick="logout()" aria-label="Logout">
+      <span class="material-symbols-outlined">logout</span>-->
+
+      
+    </button>
+  </nav>
+</div>
+
+<!-- ===== HERO SECTION ===== -->
+<section class="hero">
+  <h1>BlueTicks</h1>
+  <p>
+    Your smart nutrition companion for healthy living.
+    Calculate BMI & energy needs, explore common conditions,
+    and make informed nutrition decisions — anytime, anywhere.
+  </p>
+
+  <a href="index.html" class="cta-btn">Get Started</a>
+</section>
+
+<!-- ===== FEATURES SECTION ===== -->
+<section class="features">
+  <h2>What BlueTicks Offers</h2>
+
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <i class="fas fa-weight-scale"></i>
+      <h3>BMI Calculator</h3>
+      <p>
+        Instantly assess body mass index to understand weight status
+        and track personal health goals with ease.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <i class="fas fa-fire"></i>
+      <h3>Energy Calculator</h3>
+      <p>
+        Calculate daily energy requirements based on age, weight,
+        height, and activity level for smarter meal planning.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <i class="fas fa-heart-pulse"></i>
+      <h3>Common Conditions</h3>
+      <p>
+        Learn simplified explanations and nutrition-focused
+        interventions for conditions like diabetes and hypertension.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== ABOUT SECTION ===== -->
+<section class="about">
+  <div class="about-content">
+    <h2>Designed for Students, Clinicians & Communities</h2>
+    <p>
+      BlueTicks bridges nutrition science and digital health.
+      Built with simplicity, accuracy, and offline access in mind,
+      it empowers users to make healthier choices wherever they are.
+    </p>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="app-footer">
+  <div class="divider">
+    <a href="home.html" class="brand-link">BlueTicks</a>
+  </div>
+
+  <span class="brand">
+    © 2026 BlueTicks Technologies | All Rights Reserved
+  </span>
+  <span class="version">v1.0.1</span>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="home.js"></script>
+
+<script>
+
+
+  // Auth check
+  /*if (!localStorage.getItem("loggedInUser")) {
+    window.location.href = "login.html";
+  }
+
+  // Logout
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  }*/
+
+
+
+  // Menu toggle
+  const menuBtn = document.getElementById("menuBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const menuOverlay = document.getElementById("menuOverlay");
+
+  menuBtn.onclick = () => menuOverlay.classList.add("show");
+  closeBtn.onclick = () => menuOverlay.classList.remove("show");
+
+
+
+  // Service Worker
+  /*if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then(() => console.log("✅ Service Worker registered"))
+        .catch(err => console.error("❌ SW registration failed:", err));
+    });
+  }*/
+
+
+
+ 
+</script>
+
+</body>
+</html>
