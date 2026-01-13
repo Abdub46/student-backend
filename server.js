@@ -37,12 +37,13 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: 5432,
+  port: process.env.DB_PORT,
+  //port: 5432,
 
-  /*Number(process.env.DB_PORT),
-  ssl: { rejectUnauthorized: false }*/
+ // Number(process.env.DB_PORT),
+  ssl: { rejectUnauthorized: false }
 
-  ssl: isProduction ? { rejectUnauthorized: false } : false
+  //ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
 // Test DB connection
