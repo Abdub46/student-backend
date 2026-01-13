@@ -118,7 +118,7 @@ app.get("/nutrition", async (req, res) => {
 
 
 //Delete records
-/*app.delete("/nutrition/:id", async (req, res) => {
+app.delete("/nutrition/:id", async (req, res) => {
   try {
     await pool.query(
       "DELETE FROM nutrition_history WHERE id = $1",
@@ -128,7 +128,7 @@ app.get("/nutrition", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Delete failed" });
   }
-});*/
+});
 
 
 /* =======================

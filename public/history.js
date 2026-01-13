@@ -1,88 +1,14 @@
-/*document.addEventListener("DOMContentLoaded", async () => {
-  const historyList = document.getElementById("historyList");
-
-  if (!historyList) {
-    console.error("❌ historyList element not found");
-    return;
-  }
-
-  historyList.innerHTML = "<p>Loading records...</p>";
-
-  try {
-    const res = await fetch("/nutrition");
-
-    if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      historyList.innerHTML = "<p>No nutrition records found</p>";
-      return;
-    }
-
-    historyList.innerHTML = "";
-
-    data.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "history-card";
-
-      div.innerHTML = `
-        <p><b>Name:</b> ${r.name}</p>
-        <p><b>Gender:</b> ${r.gender}</p>
-        <p><b>Age:</b> ${r.age}</p>
-        <p><b>Weight:</b> ${r.weight} kg</p>
-        <p><b>Height:</b> ${r.height} cm</p>
-        <p><b>BMI:</b> ${r.bmi} (${r.category})</p>
-        ${r.ideal_weight ? `<p><b>Ideal:</b> ${r.ideal_weight} kg</p>` : ""}
-        <p><b>Energy:</b> ${r.energy} kcal/day</p>
-        <small>${new Date(r.created_at).toLocaleString()}</small>
-      `;
-
-      historyList.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error("❌ History load failed:", err);
-    historyList.innerHTML = "<p>Failed to load history ❌</p>";
-  }
-});*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/*************************************************
+ * ELEMENTS
+ *************************************************/
 const historyList = document.getElementById("historyList");
-const dateFilter = document.getElementById("dateFilter");
+const undoContainer = document.getElementById("undoContainer");
 
-let allRecords = [];
+/*************************************************
+ * LOCAL STORAGE KEYS
+ *************************************************/
+const HIDDEN_KEY = "hiddenNutritionRecords";
+const UNDO_KEY = "lastDeletedRecord";
 
 /*************************************************
  * LOAD HISTORY
@@ -94,17 +20,23 @@ async function loadHistory() {
 
   try {
     const res = await fetch("/nutrition");
-    if (!res.ok) throw new Error("Fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch records");
 
-    allRecords = await res.json();
+    let data = await res.json();
 
-    if (allRecords.length === 0) {
-      historyList.innerHTML = `<p class="empty">No records found</p>`;
+    const hiddenIds = JSON.parse(localStorage.getItem(HIDDEN_KEY)) || [];
+
+    // Filter hidden records (local-only delete)
+    data = data.filter(r => !hiddenIds.includes(r.id));
+
+    if (data.length === 0) {
+      historyList.innerHTML = `<p class="empty">No nutrition records found</p>`;
       return;
     }
 
-    renderRecords(allRecords);
+    historyList.innerHTML = "";
 
+    data.forEach(record => renderCard(record));
   } catch (err) {
     console.error(err);
     historyList.innerHTML = `<p class="error">Failed to load history ❌</p>`;
@@ -112,80 +44,85 @@ async function loadHistory() {
 }
 
 /*************************************************
- * RENDER RECORDS
+ * RENDER CARD
  *************************************************/
-function renderRecords(records) {
-  historyList.innerHTML = "";
+function renderCard(record) {
+  const card = document.createElement("div");
+  card.className = "history-card";
+  card.dataset.id = record.id;
 
-  records.forEach(record => {
-    const card = document.createElement("div");
-    card.className = "history-card";
+  card.innerHTML = `
+    <div class="card-header">
+      <strong>${record.name}</strong>
+      <span>${new Date(record.created_at).toLocaleDateString()}</span>
+    </div>
 
-    card.innerHTML = `
-      <div class="card-header">
-        <span>${record.name}</span>
-        <span>${new Date(record.created_at).toLocaleDateString()}</span>
-      </div>
+    <div class="card-body">
+      <p><b>Gender:</b> ${record.gender}</p>
+      <p><b>Age:</b> ${record.age}</p>
+      <p><b>BMI:</b> ${record.bmi} (${record.category})</p>
+      <p><b>Energy:</b> ${record.energy} kcal/day</p>
+    </div>
 
-      <div class="card-body">
-        <p><b>Gender:</b> ${record.gender}</p>
-        <p><b>Age:</b> ${record.age}</p>
-        <p><b>Weight:</b> ${record.weight} kg</p>
-        <p><b>Height:</b> ${record.height} cm</p>
-        <p><b>BMI:</b> ${record.bmi} (${record.category})</p>
-        <p><b>Energy:</b> ${record.energy} kcal/day</p>
+    <button class="delete-btn">Delete</button>
+  `;
 
-        <button class="delete-btn" data-id="${record.id}">
-          Delete
-        </button>
-      </div>
-    `;
+  card.querySelector(".delete-btn").addEventListener("click", () =>
+    deleteWithUndo(record)
+  );
 
-    historyList.appendChild(card);
-  });
-
-  attachDeleteHandlers();
+  historyList.appendChild(card);
 }
 
 /*************************************************
- * DATE FILTER
+ * DELETE WITH UNDO (LOCAL ONLY)
  *************************************************/
-dateFilter.addEventListener("change", () => {
-  const selectedDate = dateFilter.value;
+function deleteWithUndo(record) {
+  // Save for undo
+  localStorage.setItem(UNDO_KEY, JSON.stringify(record));
 
-  if (!selectedDate) {
-    renderRecords(allRecords);
-    return;
-  }
+  // Hide record locally
+  const hidden = JSON.parse(localStorage.getItem(HIDDEN_KEY)) || [];
+  hidden.push(record.id);
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
 
-  const filtered = allRecords.filter(r =>
-    r.created_at.startsWith(selectedDate)
-  );
+  // Remove from UI
+  document.querySelector(`[data-id="${record.id}"]`)?.remove();
 
-  renderRecords(filtered);
-});
+  showUndo();
+}
 
 /*************************************************
- * DELETE RECORD
+ * UNDO UI
  *************************************************/
-function attachDeleteHandlers() {
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
+function showUndo() {
+  undoContainer.innerHTML = `
+    <div class="undo-banner">
+      Record deleted
+      <button id="undoBtn">Undo</button>
+    </div>
+  `;
 
-      if (!confirm("Delete this record?")) return;
+  document.getElementById("undoBtn").onclick = undoDelete;
 
-      try {
-        const res = await fetch(`/nutrition/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Delete failed");
+  // Auto-dismiss after 6 seconds
+  setTimeout(() => (undoContainer.innerHTML = ""), 6000);
+}
 
-        allRecords = allRecords.filter(r => r.id != id);
-        renderRecords(allRecords);
+/*************************************************
+ * UNDO DELETE
+ *************************************************/
+function undoDelete() {
+  const record = JSON.parse(localStorage.getItem(UNDO_KEY));
+  if (!record) return;
 
-      } catch (err) {
-        alert("Failed to delete record ❌");
-      }
-    });
-  });
+  let hidden = JSON.parse(localStorage.getItem(HIDDEN_KEY)) || [];
+  hidden = hidden.filter(id => id !== record.id);
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+
+  localStorage.removeItem(UNDO_KEY);
+  undoContainer.innerHTML = "";
+
+  renderCard(record);
 }
 
